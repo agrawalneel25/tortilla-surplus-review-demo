@@ -46,8 +46,9 @@ def _supporting_figures(findings: list[Finding]) -> str:
     for finding in findings:
         figures.append(
             f"{finding.item}: {finding.portions_remaining} portions remain, "
-            f"historical post-checkpoint demand is {finding.expected_remaining_sales:.1f}, "
-            f"projected surplus is {finding.projected_surplus:.1f}"
+            f"highest demand across {finding.baseline_shift_count} recent comparison evenings is "
+            f"{finding.highest_observed_remaining_sales}, "
+            f"leaving a conservative surplus floor of {finding.conservative_surplus_floor:.1f}"
         )
     return "; ".join(figures) + "."
 

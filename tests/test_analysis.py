@@ -56,7 +56,7 @@ class SurplusReviewTests(unittest.TestCase):
     @patch.dict("os.environ", {}, clear=True)
     def test_claude_option_requires_an_api_key(self) -> None:
         with self.assertRaises(RuntimeError):
-            generate_briefs(self.findings, "claude-sonnet-4-20250514")
+            generate_briefs(self.findings, "claude-sonnet-4-6")
 
 
 if __name__ == "__main__":

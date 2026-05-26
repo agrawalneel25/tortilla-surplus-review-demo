@@ -4,6 +4,8 @@ An illustrative prototype for a restaurant operations team. It flags menu compon
 
 This demo uses synthetic data only. It is not connected to Tortilla systems, does not make preparation decisions, and does not automatically list surplus food.
 
+**Live dashboard:** https://agrawalneel25.github.io/tortilla-surplus-review-demo/
+
 ![Generated dashboard preview](docs/dashboard.png)
 
 ## Why This Scope

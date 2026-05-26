@@ -8,6 +8,17 @@ This demo uses synthetic data only. It is not connected to Tortilla systems, doe
 
 ![Generated dashboard preview](docs/dashboard.png)
 
+## Quick Tour
+
+No setup is needed to view the live dashboard:
+
+1. Open the [live dashboard](https://agrawalneel25.github.io/tortilla-surplus-review-demo/).
+2. Read the four summary cards at the top: this synthetic shift has 2 high-risk item flags covering 23 projected surplus portions.
+3. Inspect the table to see why each item was classified as `high`, `review` or `low`.
+4. Read the manager briefs below the table. They explain the finding but leave any action with staff.
+
+The current example deliberately surfaces a clear case in `Demo Store A`: chicken and guacamole remain materially above historical post-17:00 demand.
+
 ## Why This Scope
 
 For a restaurant manager, a useful first version should be easy to question:
@@ -19,22 +30,36 @@ For a restaurant manager, a useful first version should be easy to question:
 
 The numerical flag is deterministic. By default the brief is deterministic too, so the demo is easy to inspect. An optional Claude API path can rewrite only the manager brief from structured findings. The model is told not to invent quantities or take actions.
 
-## Run
+## Run Locally
 
-From the repository root:
+Requirements: Python 3.10 or later. No third-party packages are required.
+
+From the repository root, build the same deterministic dashboard shown online:
 
 ```powershell
 python -m src.run_demo
 start docs\index.html
 ```
 
-Run tests:
+On macOS or Linux, replace the second command with:
 
-```powershell
-python -m unittest discover -s tests
+```bash
+open docs/index.html
+# or: xdg-open docs/index.html
 ```
 
-Optional Claude-written briefs:
+Expected console summary:
+
+```text
+Stores checked: 3
+Items checked: 9
+High-risk flags: 2
+Projected portions in high-risk flags: 23
+```
+
+## Optional Claude Briefs
+
+The default dashboard uses deterministic text. To demonstrate the LLM integration boundary, set an Anthropic API key and ask Claude to rewrite only the manager briefs:
 
 ```powershell
 $env:ANTHROPIC_API_KEY="your-key"
@@ -42,7 +67,23 @@ python -m src.run_demo --claude
 start docs\index.html
 ```
 
-The optional route calls Anthropic's Messages API directly with Python's standard library. It was added as an integration boundary; the committed dashboard uses deterministic briefs and does not require a key.
+On macOS or Linux:
+
+```bash
+export ANTHROPIC_API_KEY="your-key"
+python -m src.run_demo --claude
+open docs/index.html
+```
+
+The optional route calls Anthropic's Messages API directly with Python's standard library and defaults to `claude-sonnet-4-6`. It receives calculated findings only, with instructions not to invent quantities or take actions. The committed live dashboard does not require a key.
+
+## Test
+
+```powershell
+python -m unittest discover -s tests
+```
+
+The tests cover high-risk flagging, summary metrics, manager-brief guardrails, HTML output and failure on missing baseline data.
 
 ## Data
 

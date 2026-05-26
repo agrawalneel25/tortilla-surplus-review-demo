@@ -1,0 +1,2 @@
+# No third-party dependencies. The dashboard is generated with Python stdlib only.
+

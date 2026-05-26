@@ -1,0 +1,159 @@
+{
+  "metadata": {
+    "prototype": "Tortilla Close-Out Review Copilot",
+    "checkpoint": "17:00",
+    "data_mode": "synthetic",
+    "brief_mode": "deterministic",
+    "decision_owner": "store_manager"
+  },
+  "method": {
+    "baseline": "highest observed units sold after 17:00 across recent comparison shifts",
+    "conservative_surplus_floor": "max(portions_remaining - highest_observed_remaining_sales, 0)",
+    "high_rule": {
+      "minimum_portions": 8,
+      "minimum_share_of_remaining": 0.25
+    },
+    "review_minimum_portions": 4
+  },
+  "summary": {
+    "stores_checked": 3,
+    "items_checked": 9,
+    "high_risk_items": 2,
+    "review_items": 1,
+    "conservative_flagged_units": 21,
+    "mean_flagged_units": 23
+  },
+  "findings": [
+    {
+      "store": "Demo Store A",
+      "item": "Chicken",
+      "prepared_units": 84,
+      "sold_units_by_17_00": 54,
+      "portions_remaining": 30,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 15.8,
+      "highest_observed_remaining_sales": 17,
+      "mean_surplus_estimate": 14.2,
+      "conservative_surplus_floor": 13.0,
+      "surplus_floor_share": 0.433,
+      "status": "high"
+    },
+    {
+      "store": "Demo Store A",
+      "item": "Guacamole",
+      "prepared_units": 34,
+      "sold_units_by_17_00": 18,
+      "portions_remaining": 16,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 7.6,
+      "highest_observed_remaining_sales": 8,
+      "mean_surplus_estimate": 8.4,
+      "conservative_surplus_floor": 8.0,
+      "surplus_floor_share": 0.5,
+      "status": "high"
+    },
+    {
+      "store": "Demo Store B",
+      "item": "Rice",
+      "prepared_units": 92,
+      "sold_units_by_17_00": 59,
+      "portions_remaining": 33,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 24.8,
+      "highest_observed_remaining_sales": 26,
+      "mean_surplus_estimate": 8.2,
+      "conservative_surplus_floor": 7.0,
+      "surplus_floor_share": 0.212,
+      "status": "review"
+    },
+    {
+      "store": "Demo Store B",
+      "item": "Guacamole",
+      "prepared_units": 32,
+      "sold_units_by_17_00": 20,
+      "portions_remaining": 12,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 9.0,
+      "highest_observed_remaining_sales": 10,
+      "mean_surplus_estimate": 3.0,
+      "conservative_surplus_floor": 2.0,
+      "surplus_floor_share": 0.167,
+      "status": "low"
+    },
+    {
+      "store": "Demo Store B",
+      "item": "Chicken",
+      "prepared_units": 78,
+      "sold_units_by_17_00": 57,
+      "portions_remaining": 21,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 19.0,
+      "highest_observed_remaining_sales": 20,
+      "mean_surplus_estimate": 2.0,
+      "conservative_surplus_floor": 1.0,
+      "surplus_floor_share": 0.048,
+      "status": "low"
+    },
+    {
+      "store": "Demo Store C",
+      "item": "Chicken",
+      "prepared_units": 73,
+      "sold_units_by_17_00": 53,
+      "portions_remaining": 20,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 17.8,
+      "highest_observed_remaining_sales": 19,
+      "mean_surplus_estimate": 2.2,
+      "conservative_surplus_floor": 1.0,
+      "surplus_floor_share": 0.05,
+      "status": "low"
+    },
+    {
+      "store": "Demo Store C",
+      "item": "Guacamole",
+      "prepared_units": 27,
+      "sold_units_by_17_00": 17,
+      "portions_remaining": 10,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 8.4,
+      "highest_observed_remaining_sales": 9,
+      "mean_surplus_estimate": 1.6,
+      "conservative_surplus_floor": 1.0,
+      "surplus_floor_share": 0.1,
+      "status": "low"
+    },
+    {
+      "store": "Demo Store C",
+      "item": "Rice",
+      "prepared_units": 81,
+      "sold_units_by_17_00": 58,
+      "portions_remaining": 23,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 20.8,
+      "highest_observed_remaining_sales": 22,
+      "mean_surplus_estimate": 2.2,
+      "conservative_surplus_floor": 1.0,
+      "surplus_floor_share": 0.043,
+      "status": "low"
+    },
+    {
+      "store": "Demo Store A",
+      "item": "Rice",
+      "prepared_units": 75,
+      "sold_units_by_17_00": 53,
+      "portions_remaining": 22,
+      "baseline_shift_count": 5,
+      "expected_remaining_sales": 20.4,
+      "highest_observed_remaining_sales": 22,
+      "mean_surplus_estimate": 1.6,
+      "conservative_surplus_floor": 0.0,
+      "surplus_floor_share": 0.0,
+      "status": "low"
+    }
+  ],
+  "manager_briefs": {
+    "Demo Store A": "Demo Store A: review possible surplus for chicken and guacamole before close. Chicken: 30 portions remain, highest demand across 5 recent comparison evenings is 17, leaving a conservative surplus floor of 13.0; Guacamole: 16 portions remain, highest demand across 5 recent comparison evenings is 8, leaving a conservative surplus floor of 8.0. Before acting, check live orders, in-store demand and food-safety constraints. Any surplus listing remains a manager decision.",
+    "Demo Store B": "Demo Store B: no high-risk flag, but monitor rice. Rice: 33 portions remain, highest demand across 5 recent comparison evenings is 26, leaving a conservative surplus floor of 7.0. Before acting, check live orders, in-store demand and food-safety constraints. Any surplus listing remains a manager decision.",
+    "Demo Store C": "Demo Store C: no material surplus flag at the 17:00 checkpoint. Before acting, check live orders, in-store demand and food-safety constraints. Any surplus listing remains a manager decision."
+  }
+}

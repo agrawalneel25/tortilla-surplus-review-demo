@@ -1,8 +1,8 @@
-# Surplus Review Assistant
+# Tortilla Close-Out Review Copilot
 
-An illustrative prototype for a restaurant operations team. It flags menu components that may be at unusual risk of end-of-shift surplus, then produces a short manager brief explaining what should be checked.
+A candidate-built prototype inspired by Tortilla's AI Innovation Intern opportunity: a store-facing tool that screens a synthetic 17:00 ingredient snapshot for possible end-of-shift surplus, shows the evidence, and prepares a manager brief.
 
-This demo uses synthetic data only. It is not connected to Tortilla systems, does not make preparation decisions, and does not automatically list surplus food.
+This is an independent demonstration. It uses **synthetic data only**, is not connected to Tortilla systems and never makes a preparation, waste or surplus-listing decision.
 
 **Live dashboard:** https://agrawalneel25.github.io/tortilla-surplus-review-demo/
 
@@ -10,40 +10,68 @@ This demo uses synthetic data only. It is not connected to Tortilla systems, doe
 
 ## Quick Tour
 
-No setup is needed to view the live dashboard:
+Open the live dashboard without any setup:
 
-1. Open the [live dashboard](https://agrawalneel25.github.io/tortilla-surplus-review-demo/).
-2. Read the four summary cards at the top: this synthetic shift has 2 high-risk item flags covering 23 projected surplus portions.
-3. Inspect the table to see why each item was classified as `high`, `review` or `low`.
-4. Read the manager briefs below the table. They explain the finding but leave any action with staff.
+1. The summary row identifies `2` high-priority ingredient flags and `21` conservative portions to review.
+2. The prioritised queue explains why chicken and guacamole at `Demo Store A` are surfaced for a human check.
+3. The evidence explorer can be filtered by store or status and exposes every input to the flag.
+4. The **Download structured review JSON** link demonstrates a stable handoff for a later BI, Qlik Cloud or MCP-connected workflow.
+5. The manager briefs state the review required while leaving all operational action with staff.
 
-The current example deliberately surfaces a clear case in `Demo Store A`: chicken and guacamole remain materially above historical post-17:00 demand.
+## Product Choice
 
-## Why This Scope
+For a restaurant business, an initial AI-enabled tool should earn trust before it recommends action. This prototype focuses on close-out surplus review because it is measurable, operationally relevant and easy for a manager to challenge from visible evidence.
 
-For a restaurant manager, a useful first version should be easy to question:
+A simple calculation could compare remaining portions to average recent demand. This prototype takes a more conservative approach: it flags an item as high priority only when it remains materially above the **highest** evening demand seen in the comparison shifts. The manager sees the mean as context, but the queue is driven by the stronger test.
 
-1. Compare portions currently remaining with the store's historical remaining demand at the same checkpoint.
-2. Flag only material projected surplus.
-3. Show the supporting figures.
-4. Leave any operational action with the manager.
+## Decision Logic
 
-The numerical flag is deterministic. By default the brief is deterministic too, so the demo is easy to inspect. An optional Claude API path can rewrite only the manager brief from structured findings. The model is told not to invent quantities or take actions.
+The committed example has five synthetic comparison evenings for each store and component, plus one synthetic current snapshot.
+
+```text
+portions_remaining = prepared_units - sold_units_by_17_00
+mean_surplus_estimate = max(portions_remaining - mean(recent evening demand), 0)
+conservative_surplus_floor = max(portions_remaining - max(recent evening demand), 0)
+```
+
+| Status | Deterministic rule |
+| --- | --- |
+| High priority | Conservative floor is at least 8 portions and at least 25% of portions remaining |
+| Monitor | Conservative floor is at least 4 portions but does not pass both high-priority thresholds |
+| Low | Conservative floor is below 4 portions |
+
+This is a review signal against a small synthetic baseline, not a demand forecast or proof that food will be surplus.
+
+## AI And Integration Boundary
+
+The risk classification is deliberately deterministic and testable:
+
+```text
+synthetic CSV inputs -> validated Python screening -> fixed evidence and classifications
+                                                    -> deterministic brief (default)
+                                                    -> optional Claude brief (narrative only)
+outputs: review.json + static dashboard
+```
+
+`docs/review.json` is the machine-readable output contract. It contains the method, summary, item-level evidence and briefs, making the prototype straightforward to adapt to data received through Qlik Cloud or an MCP server.
+
+The optional Claude path receives calculated findings only. It cannot alter the table or classifications, must keep the human-decision guardrail in each narrative, and is not used by the published dashboard.
 
 ## Run Locally
 
-Requirements: Python 3.10 or later. No third-party packages are required.
+Requirements: Python 3.10 or later. The deterministic path uses no third-party packages.
 
-From the repository root, build the same deterministic dashboard shown online:
+On Windows:
 
 ```powershell
 python -m src.run_demo
 start docs\index.html
 ```
 
-On macOS or Linux, replace the second command with:
+On macOS or Linux:
 
 ```bash
+python -m src.run_demo
 open docs/index.html
 # or: xdg-open docs/index.html
 ```
@@ -51,15 +79,20 @@ open docs/index.html
 Expected console summary:
 
 ```text
+Tortilla Close-Out Review Copilot: synthetic 17:00 snapshot
 Stores checked: 3
 Items checked: 9
-High-risk flags: 2
-Projected portions in high-risk flags: 23
+High-priority flags: 2
+Monitor flags: 1
+Conservative portions in high-risk flags: 21
+Mean-estimate portions in high-risk flags: 23
 ```
+
+The run regenerates `docs/index.html` and `docs/review.json`, the same deterministic artifacts served through GitHub Pages.
 
 ## Optional Claude Briefs
 
-The default dashboard uses deterministic text. To demonstrate the LLM integration boundary, set an Anthropic API key and ask Claude to rewrite only the manager briefs:
+To demonstrate a narrow LLM integration after deterministic classification, provide an Anthropic API key:
 
 ```powershell
 $env:ANTHROPIC_API_KEY="your-key"
@@ -67,55 +100,44 @@ python -m src.run_demo --claude
 start docs\index.html
 ```
 
-On macOS or Linux:
-
 ```bash
 export ANTHROPIC_API_KEY="your-key"
 python -m src.run_demo --claude
 open docs/index.html
 ```
 
-The optional route calls Anthropic's Messages API directly with Python's standard library and defaults to `claude-sonnet-4-6`. It receives calculated findings only, with instructions not to invent quantities or take actions. The committed live dashboard does not require a key.
+The direct Messages API call defaults to `claude-sonnet-4-6`. Do not commit a generated Claude version of `docs/index.html` or `docs/review.json`; the public build is intentionally deterministic and key-free.
 
 ## Test
 
 ```powershell
 python -m unittest discover -s tests
+python -m src.run_demo
+git diff --exit-code -- docs/index.html docs/review.json
 ```
 
-The tests cover high-risk flagging, summary metrics, manager-brief guardrails, HTML output and failure on missing baseline data.
+The tests cover conservative classification, the distinction between mean estimates and the high-priority floor, manager guardrails, structured JSON output, HTML output, invalid snapshot rejection and optional Claude boundary validation. GitHub Actions runs these checks across Python 3.10, 3.11 and 3.12.
 
-## Data
+## Production Path
 
-`data/historical_remaining_sales.csv` contains synthetic prior shifts. Each row records portions sold after 17:00 for one store and item.
+A real pilot would require controls beyond this illustrative prototype:
 
-`data/current_shift.csv` contains a synthetic 17:00 snapshot: portions prepared and portions already sold.
+1. Replace synthetic CSV snapshots with authorised, read-only sales and prep inputs through the business data environment.
+2. Validate historical windows by store, weekday, promotion, channel mix, local events and weather before using a threshold operationally.
+3. Log manager review outcomes without automating an intervention, then measure false-positive flags, surplus portions avoided and time saved.
+4. Add role-based access, audit history and food-safety governance before any operational deployment.
 
-For each store and item:
+## Repository Structure
 
 ```text
-portions_remaining = prepared_units - sold_units_by_17_00
-expected_remaining_sales = mean(prior portions sold after 17:00)
-projected_surplus = max(portions_remaining - expected_remaining_sales, 0)
+data/              synthetic comparison shifts and current snapshot
+docs/index.html    generated GitHub Pages dashboard
+docs/review.json   generated structured handoff artifact
+src/analysis.py    validated deterministic classification logic
+src/briefs.py      deterministic manager-facing narratives
+src/claude.py      optional constrained Claude narrative path
+src/export.py      JSON output contract builder
+src/report.py      standalone interactive HTML report generator
+src/run_demo.py    command-line entry point
+tests/             unit tests
 ```
-
-The demo flags `high` risk only where projected surplus is at least 8 portions and at least 25 percent of portions remaining. Smaller excesses are shown as `review` or `low`.
-
-## Structure
-
-```text
-data/             synthetic CSV inputs
-docs/index.html   generated dashboard for review
-src/analysis.py   baseline and flagging logic
-src/briefs.py     deterministic manager-facing brief
-src/claude.py     optional Claude API brief rewriter
-src/report.py     standalone HTML report generator
-src/run_demo.py   CLI entry point
-tests/            unit tests
-```
-
-## Limitations
-
-- Synthetic data is useful for testing the interface, not for estimating business impact.
-- A historical mean is deliberately simple. Real validation would test seasonal, weather, promotion and channel effects.
-- The tool surfaces a review signal only. Food safety, demand changes and Too Good To Go listing decisions remain with staff.

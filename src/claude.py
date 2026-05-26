@@ -43,8 +43,7 @@ def generate_briefs(findings: list[Finding], model: str) -> dict[str, str]:
         raise RuntimeError(f"Claude request failed: {exc.code} {detail}") from exc
     text = _response_text(result)
     briefs = _extract_json(text)
-    if set(briefs) != set(stores) or not all(isinstance(briefs[store], str) for store in stores):
-        raise RuntimeError("Claude brief response did not contain one text brief for every store.")
+    _validate_briefs(briefs, stores)
     return briefs
 
 
@@ -54,8 +53,9 @@ def _prompt(findings: list[Finding], stores: list[str]) -> str:
             "store": item.store,
             "item": item.item,
             "portions_remaining": item.portions_remaining,
-            "expected_remaining_sales": round(item.expected_remaining_sales, 1),
-            "projected_surplus": round(item.projected_surplus, 1),
+            "mean_evening_demand": round(item.expected_remaining_sales, 1),
+            "highest_observed_evening_demand": item.highest_observed_remaining_sales,
+            "conservative_surplus_floor": round(item.conservative_surplus_floor, 1),
             "status": item.status,
         }
         for item in findings
@@ -63,9 +63,10 @@ def _prompt(findings: list[Finding], stores: list[str]) -> str:
     return (
         "Draft short manager briefs for a synthetic restaurant surplus-review demo. "
         "Return only a JSON object mapping each exact store name to a brief of no more than 70 words. "
+        "The classifications were calculated before this request and must not be changed. "
         "Use only the supplied figures. Do not invent quantities, recommend preparation amounts, "
-        "or say that food has been listed. Each brief must say the manager should check live demand "
-        "and decide any action. Stores: "
+        "or say that food has been listed. Each brief must include the words 'check live demand' "
+        "and state that the manager decides any action. Stores: "
         + json.dumps(stores)
         + ". Findings: "
         + json.dumps(evidence)
@@ -97,3 +98,15 @@ def _extract_json(text: str) -> dict[str, str]:
     if not isinstance(result, dict):
         raise RuntimeError("Claude brief response is not a JSON object.")
     return result
+
+
+def _validate_briefs(briefs: dict[str, str], stores: list[str]) -> None:
+    if set(briefs) != set(stores) or not all(isinstance(briefs[store], str) for store in stores):
+        raise RuntimeError("Claude brief response did not contain one text brief for every store.")
+    for store in stores:
+        brief = briefs[store]
+        lowered = brief.lower()
+        if len(brief.split()) > 70:
+            raise RuntimeError(f"Claude brief for {store} exceeds 70 words.")
+        if "check live demand" not in lowered or "manager" not in lowered or "decid" not in lowered:
+            raise RuntimeError(f"Claude brief for {store} omitted required decision guardrails.")
